@@ -13,7 +13,7 @@ services:
     volumes:
       - voting_app_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "admin"]
+      test: ["CMD", "pg_isready", "-U", "admin", "-d", "voting_db"]
       interval: 10s
       retries: 3
     restart: unless-stopped
