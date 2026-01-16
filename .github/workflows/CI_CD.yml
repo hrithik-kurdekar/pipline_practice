@@ -82,8 +82,9 @@ jobs:
             docker run \
             --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
+            -v $(pwd)/reports:/reports
             aquasec/trivy image --severity HIGH,CRITICAL --no-progress $img \
-            | tee -a reports/trivy_img_scan_report.txt \
+            --output reports/"$img".txt \
             || true
             echo "--------------------------------------------------"
           done
