@@ -1,0 +1,15 @@
+name: Voting App Devsecops CI CD Pipeline
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  scan_app:
+    runs_on: self_hosted
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+      
