@@ -107,5 +107,7 @@ jobs:
     needs: image_scan
     steps:
       - name: Deploy Application
-        run: docker compose up --no-build
+        run: |
+          docker compose down -v
+          docker compose up -d --no-build
     
