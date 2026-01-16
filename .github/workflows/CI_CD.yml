@@ -42,7 +42,7 @@ jobs:
           docker run \
           --rm \
           -v $(pwd):/workspace \
-          aquasec/trivy fs --severity HIGH,CRITICAL --no-progess /workspace \
+          aquasec/trivy fs --severity HIGH,CRITICAL --no-progress /workspace \
           | tee reports/trivy_report.txt \
           || true
 
@@ -82,7 +82,7 @@ jobs:
             docker run \
             --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            aquasec/trivy image --severity HIGH,CRITICAL --no-progess $img \
+            aquasec/trivy image --severity HIGH,CRITICAL --no-progress $img \
             | tee -a reports/trivy_img_scan_report.txt \
             || true
             echo "--------------------------------------------------"
