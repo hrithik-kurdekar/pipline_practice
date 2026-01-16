@@ -1,4 +1,4 @@
-name: Voting App Devsecops CI CD Pipeline
+name: Voting App CI CD DevSevOps Pipeline
 
 on:
   push:
@@ -7,30 +7,105 @@ on:
     branches: ["main"]
 
 jobs:
-  scan_app:
-    runs-on: self_hosted
+  code_scan:
+    runs-on: self-hosted
+    defaults:
+      run:
+        shell: bash
     steps:
-      - name: Checkout Code
+      - name: Code Chekout
         uses: actions/checkout@v4
 
-      - name: Create report directory
-        run: |
-          echo "Creating reports directory" > $GITHUB_STEP_SUMMARY
-          mkdir -p reports
+      - name: Create Reports Directory
+        run: mkdir -p reports
 
-      - name: Perform pyling scan
+      - name: Pylint Scan
         run: |
-          echo "Running pylint scan" > $GITHUB_STEP_SUMMARY && \
-          docker rum --rm -v $(pwd):/workflow cytopia/pylint /workflow/backend > reports/pylint-report.txt || true
+          docker run \
+          --rm \
+          -v $(pwd):/workspace \
+          cytopia/pylint /workspace/backend/app \
+          | tee reports/pylint_report.txt \
+          || true
+          
+      - name: Flake8 Scan
+        run: |
+          docker run \
+          --rm \
+          -v $(pwd):/workspace \
+          alpine/flake8 /workspace/backend/app \
+          | tee reports/flake8_report.txt \
+          || true
 
-      - name: Upload reports to Summary
+      - name: Trivy Fs Scan
+        run: |
+          docker run \
+          --rm \
+          -v $(pwd):/workspace \
+          aqausec/trivy fs --severity HIGH,CRITICAL --no-progess /workspace \
+          | tee reports/trivy_report.txt \
+          || true
+
+      - name: Upload Reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          - name: Scan reports
-            path: reports
-        run: echo "Reports Uploaded Successfully" > $GITHUB_STEP_SUMMARY
+          name: Code Scan Reports
+          path: reports
 
-      - name: Cleanup reports
+      - name: CleanUp
+        if: always()
         run: rm -rf reports
 
-      
+  image_scan:
+    runs-on: self-hosted
+    defaults:
+      run:
+        shell: bash
+    needs: code_scan
+    steps:
+      - name: Code Chekout
+        uses: actions/checkout@v4
+
+      - name: Create Reports Directory
+        run: mkdir -p reports
+
+      - name: Build Docker Images
+        run: docker compose build
+
+      - name: Trivy Image Scan
+        run: |
+          > reports/trivy_img_scan_report.txt
+          Images="voting_app_backend voting_app_frontend postgres:16-alpine nginx:stable-alpine"
+          for img in $Images; do
+            echo "------------ Scanning Image $img -----------------"
+            docker run \
+            --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aqausec/trivy image --severity HIGH,CRITICAL --no-progess $img \
+            | tee -a reports/trivy_img_scan_report.txt \
+            || true
+            echo "--------------------------------------------------"
+          done
+
+      - name: Upload Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Code Scan Reports
+          path: reports
+
+      - name: CleanUp
+        if: always()
+        run: rm -rf reports
+
+  deploy_app:
+    runs-on: self-hosted
+    defaults:
+      run:
+        shell: bash
+    needs: image_scan
+    steps:
+      - name: Deploy Application
+        run: docker compose up --no-build
+    
