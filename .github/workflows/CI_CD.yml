@@ -42,7 +42,7 @@ jobs:
           docker run \
           --rm \
           -v $(pwd):/workspace \
-          aqausec/trivy fs --severity HIGH,CRITICAL --no-progess /workspace \
+          aquasec/trivy fs --severity HIGH,CRITICAL --no-progess /workspace \
           | tee reports/trivy_report.txt \
           || true
 
@@ -82,7 +82,7 @@ jobs:
             docker run \
             --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            aqausec/trivy image --severity HIGH,CRITICAL --no-progess $img \
+            aquasec/trivy image --severity HIGH,CRITICAL --no-progess $img \
             | tee -a reports/trivy_img_scan_report.txt \
             || true
             echo "--------------------------------------------------"
@@ -92,7 +92,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Code Scan Reports
+          name: Image Scan Reports
           path: reports
 
       - name: CleanUp
