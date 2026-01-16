@@ -9,7 +9,28 @@ on:
 jobs:
   scan_app:
     runs_on: self_hosted
-    - name: Checkout Code
-      uses: actions/checkout@v4
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create report directory
+        run: |
+          echo "Creating reports directory" > $GITHUB_STEP_SUMMARY
+          mkdir -p reports
+
+      - name: Perform pyling scan
+        run: |
+          echo "Running pylint scan" > $GITHUB_STEP_SUMMARY && \
+          docker rum --rm -v $(pwd):/workflow cytopia/pylint /workflow/backend > reports/pylint-report.txt || true
+
+      - name: Upload reports to Summary
+        uses: actions/upload-artifact@v4
+        with:
+          - name: Scan reports
+            path: reports
+        run: echo "Reports Uploaded Successfully" > $GITHUB_STEP_SUMMARY
+
+      - name: Cleanup reports
+        run: rm -rf reports
 
       
