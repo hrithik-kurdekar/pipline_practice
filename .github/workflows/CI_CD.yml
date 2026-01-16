@@ -79,12 +79,13 @@ jobs:
           Images="voting_app_backend voting_app_frontend postgres:16-alpine nginx:stable-alpine"
           for img in $Images; do
             echo "------------ Scanning Image $img -----------------"
+            SAFE_NAME=$(echo $img | tr ':' '_')
             docker run \
             --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v $(pwd)/reports:/reports \
             aquasec/trivy image --severity HIGH,CRITICAL --no-progress $img \
-            --output reports/"$img".txt \
+            --output reports/"$SAFE_NAME".txt \
             || true
             echo "--------------------------------------------------"
           done
